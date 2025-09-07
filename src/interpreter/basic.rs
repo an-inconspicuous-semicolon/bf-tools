@@ -2,9 +2,8 @@ use crate::interpreter::Interpreter;
 use crate::program::Program;
 use crate::program::basic::BasicInstruction;
 use std::num::NonZero;
-use std::ops::Sub;
 
-struct BasicMemoryBank {
+pub(crate) struct BasicMemoryBank {
     memory: Vec<u8>,
     index: usize,
 }
@@ -135,22 +134,21 @@ impl BasicInterpreter {
 }
 
 impl Interpreter<BasicInstruction> for BasicInterpreter {
-    fn execute_program(&mut self, program: &dyn Program<BasicInstruction>, input: impl ToString) {
+    fn execute_program(
+        &mut self,
+        program: &dyn Program<BasicInstruction>,
+        input: impl ToString,
+    ) -> usize {
         self.index = 0;
-        let mut input = input.to_string();
         let mut instruction_count: usize = 0;
-        let true_instant = std::time::Instant::now();
+        let mut input = input.to_string();
+
         while let Some(instruction) = program.get(self.index) {
             self.execute_instruction(&instruction, program, &mut input);
             self.index = self.index.wrapping_add(1);
             instruction_count += 1;
         }
-        let final_instant = std::time::Instant::now();
-        let final_difference = final_instant.sub(true_instant);
-        println!(
-            "\nExecuted {instruction_count} instructions in {}s ({} per sec)",
-            final_difference.as_secs_f64(),
-            instruction_count as f64 / final_difference.as_secs_f64()
-        )
+
+        instruction_count
     }
 }

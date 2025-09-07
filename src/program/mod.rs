@@ -1,4 +1,5 @@
 pub mod basic;
+pub mod semicolon_compressed;
 
 pub trait Program<T> {
     fn get(&self, index: usize) -> Option<T>;

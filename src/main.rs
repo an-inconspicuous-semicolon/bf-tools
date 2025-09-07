@@ -1,6 +1,6 @@
-use crate::interpreter::Interpreter;
-use crate::interpreter::basic::BasicInterpreter;
-use crate::program::basic::BasicProgram;
+use crate::interpreter::ProgramInterpreter;
+use crate::interpreter::semicolon_compressed::CompressedInterpreter;
+use crate::program::semicolon_compressed::CompressedProgram;
 use std::num::NonZeroUsize;
 
 pub mod interpreter;
@@ -9,8 +9,8 @@ pub mod program;
 fn main() {
     let code = include_str!("../mandelbrot.bf");
     // let code = ",[.,]";
-    let program = BasicProgram::new(code);
-    let mut interpreter = BasicInterpreter::new(NonZeroUsize::new(30000).unwrap());
+    let program = CompressedProgram::new(code);
+    let mut interpreter = CompressedInterpreter::new(NonZeroUsize::new(30000).unwrap());
 
     let starting_instant = std::time::Instant::now();
     let instruction_count = interpreter.execute_program(&program, "Hello, World");

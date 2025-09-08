@@ -65,7 +65,6 @@ impl CompressedInterpreter {
     fn execute_instruction(
         &mut self,
         instruction: &CompressedInstruction,
-        program: &CompressedProgram,
         input: &mut String,
     ) -> usize {
         match instruction {
@@ -91,54 +90,23 @@ impl CompressedInterpreter {
                 print!("{}", self.memory.output());
                 1
             }
-            CompressedInstruction::LoopEnter => {
+            CompressedInstruction::LoopEnter(v) => {
                 if self.memory.is_zero() {
-                    self.skip_loop(program);
+                    self.index = *v;
+                    // self.skip_loop(program);
                     // using the jump table is slower for some reason, but I'll keep it here encase I find a way to make it faster
                     // self.index = program.get_jump_location(self.index);
                 }
                 1
             }
-            CompressedInstruction::LoopExit => {
+            CompressedInstruction::LoopExit(v) => {
                 if !self.memory.is_zero() {
-                    self.reverse_loop(program);
+                    self.index = *v;
+                    // self.reverse_loop(program);
                     // using the jump table is slower for some reason, but I'll keep it here encase I find a way to make it faster
                     // self.index = program.get_jump_location(self.index);
                 }
                 1
-            }
-        }
-    }
-
-    fn skip_loop(&mut self, program: &dyn Program<CompressedInstruction>) {
-        let starting_index = self.index;
-        let mut depth: usize = 1; // we already encountered a loop enter to get here
-        while depth > 0 {
-            self.index = unsafe { self.index.unchecked_add(1) };
-            match program.get(self.index) {
-                Some(CompressedInstruction::LoopEnter) => depth = unsafe { depth.unchecked_add(1) },
-                Some(CompressedInstruction::LoopExit) => depth = unsafe { depth.unchecked_sub(1) },
-                Some(_) => {}
-                None => panic!("Unbalanced program at index {starting_index}"),
-            }
-        }
-    }
-
-    fn reverse_loop(&mut self, program: &dyn Program<CompressedInstruction>) {
-        let starting_index = self.index;
-        let mut depth: usize = 1; // we already encountered a loop exit to get here
-        while depth > 0 {
-            unsafe {
-                self.index = self.index.unchecked_sub(1);
-            }
-            if self.index == 0 {
-                std::process::exit(1);
-            }
-            match program.get(self.index) {
-                Some(CompressedInstruction::LoopEnter) => depth = unsafe { depth.unchecked_sub(1) },
-                Some(CompressedInstruction::LoopExit) => depth = unsafe { depth.unchecked_add(1) },
-                Some(_) => {}
-                None => panic!("Unbalanced program at index {starting_index}"),
             }
         }
     }
@@ -151,7 +119,7 @@ impl ProgramInterpreter<CompressedProgram> for CompressedInterpreter {
         let mut input = input.to_string();
 
         while let Some(instruction) = program.get(self.index) {
-            instruction_count += self.execute_instruction(&instruction, program, &mut input);
+            instruction_count += self.execute_instruction(&instruction, &mut input);
             self.index = self.index.wrapping_add(1);
         }
 
